@@ -1,48 +1,53 @@
-import fastify from 'fastify'
-import cors from '@fastify/cors'
-import { createTrip } from './routes/create-trip'
-import {
-  serializerCompiler,
-  validatorCompiler,
-} from 'fastify-type-provider-zod'
-import { confirmTrip } from './routes/confirm-trip'
-import { confirmParticipants } from './routes/confirm-participant'
-import { createActivity } from './routes/create-activity'
-import { getActivities } from './routes/get-activities'
-import { createLink } from './routes/create-link'
-import { getLinks } from './routes/get-links'
-import { getParticipants } from './routes/get-participants'
-import { createInvite } from './routes/create-invite'
-import { updateTrip } from './routes/update-trip'
-import { getTripDetails } from './routes/get-trip-details'
-import { getParticipant } from './routes/get-participant'
-import { errorHandler } from './error-handler'
-import { env } from './env'
+import fastify from "fastify";
 
-const app = fastify()
+import fastifySwagger from "@fastify/swagger";
+import fastifySwaggerUI from "@fastify/swagger-ui";
+import fastifyCors from "@fastify/cors";
 
-app.register(cors, {
+import { serializerCompiler, validatorCompiler, jsonSchemaTransform, ZodTypeProvider } from 'fastify-type-provider-zod'
+import { createEvent } from "./routes/create-event";
+import { registerForEvent } from "./routes/register-for-event";
+import { getEvent } from "./routes/get-event";
+import { getAttendeeBadge } from "./routes/get-attendee-badge";
+import { checkIn } from "./routes/check-in";
+import { getEventAttendees } from "./routes/get-event-attendees";
+import { errorHandler } from "./error-handler";
+
+export const app = fastify().withTypeProvider<ZodTypeProvider>()
+
+app.register(fastifyCors, {
   origin: '*',
 })
 
-app.setValidatorCompiler(validatorCompiler)
-app.setSerializerCompiler(serializerCompiler)
+app.register(fastifySwagger, {
+  swagger: {
+    consumes: ['application/json'],
+    produces: ['application/json'],
+    info: {
+      title: 'pass.in',
+      description: 'Especificações da API para o back-end da aplicação pass.in construída durante o NLW Unite da Rocketseat.',
+      version: '1.0.0'
+    },
+  },
+  transform: jsonSchemaTransform,
+})
+
+app.register(fastifySwaggerUI, {
+  routePrefix: '/docs',
+})
+
+app.setValidatorCompiler(validatorCompiler);
+app.setSerializerCompiler(serializerCompiler);
+
+app.register(createEvent)
+app.register(registerForEvent)
+app.register(getEvent)
+app.register(getAttendeeBadge)
+app.register(checkIn)
+app.register(getEventAttendees)
 
 app.setErrorHandler(errorHandler)
 
-app.register(createTrip)
-app.register(confirmTrip)
-app.register(confirmParticipants)
-app.register(createActivity)
-app.register(getActivities)
-app.register(createLink)
-app.register(getLinks)
-app.register(getParticipants)
-app.register(createInvite)
-app.register(updateTrip)
-app.register(getTripDetails)
-app.register(getParticipant)
-
-app.listen({ port: env.PORT }).then(() => {
-  console.log('Server running!')
+app.listen({ port: 3333, host: '0.0.0.0' }).then(() => {
+  console.log('HTTP server running!')
 })
